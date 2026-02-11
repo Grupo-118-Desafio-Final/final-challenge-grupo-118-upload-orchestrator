@@ -1,4 +1,4 @@
-using Amazon.S3;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UploadsApi.Application.Interfaces;
@@ -17,29 +17,30 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<MongoDbOptions>(configuration.GetSection(MongoDbOptions.SectionName));
-        services.Configure<S3Options>(configuration.GetSection(S3Options.SectionName));
+        services.Configure<AzureBlobOptions>(configuration.GetSection(AzureBlobOptions.SectionName));
         services.Configure<RabbitMqOptions>(configuration.GetSection(RabbitMqOptions.SectionName));
 
         services.AddSingleton<MongoDbContext>();
 
-        services.AddSingleton<IAmazonS3>(sp =>
+        services.AddSingleton<BlobServiceClient>(sp =>
         {
-            var s3Options = configuration.GetSection(S3Options.SectionName).Get<S3Options>()!;
+            var options = configuration.GetSection(AzureBlobOptions.SectionName).Get<AzureBlobOptions>()!;
 
-            var config = new AmazonS3Config
+            var blobClientOptions = new BlobClientOptions
             {
-                ServiceURL = s3Options.ServiceUrl,
-                ForcePathStyle = s3Options.ForcePathStyle
+                Retry =
+                {
+                    MaxRetries = options.MaxRetries,
+                    Delay = TimeSpan.FromSeconds(options.RetryDelaySeconds),
+                    Mode = Azure.Core.RetryMode.Exponential
+                }
             };
 
-            return new AmazonS3Client(
-                s3Options.AccessKey,
-                s3Options.SecretKey,
-                config);
+            return new BlobServiceClient(options.ConnectionString, blobClientOptions);
         });
 
         services.AddScoped<IUploadRepository, MongoDbUploadRepository>();
-        services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IStorageService, AzureBlobStorageService>();
         services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
 
         return services;

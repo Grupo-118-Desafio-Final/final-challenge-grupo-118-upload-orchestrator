@@ -1,10 +1,15 @@
 using Microsoft.OpenApi.Models;
+using MongoDB.Bson;
 using UploadsApi.Api.Middleware;
 using UploadsApi.Application;
 using UploadsApi.Infrastructure;
 using UploadsApi.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+
+#pragma warning disable CS0618 
+BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3; 
+#pragma warning restore CS0618
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
