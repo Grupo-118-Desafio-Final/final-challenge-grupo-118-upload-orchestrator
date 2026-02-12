@@ -16,8 +16,8 @@ public class CompleteUploadRequestValidator : AbstractValidator<CompleteUploadRe
                 part.RuleFor(p => p.PartNumber)
                     .GreaterThan(0).WithMessage("Part number must be greater than 0");
 
-                part.RuleFor(p => p.ETag)
-                    .NotEmpty().WithMessage("ETag is required for each part");
+                // ETag is required for S3/MinIO but not for Azure Blob Storage
+                // Azure uses block IDs derived from part numbers instead
             });
     }
 }
