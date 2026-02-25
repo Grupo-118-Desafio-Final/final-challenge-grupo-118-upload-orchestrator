@@ -1,0 +1,111 @@
+services:
+  uploads-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MongoDB__ConnectionString=mongodb://uploads_user:uploads_password@mongodb:27017/uploads_db?authSource=admin
+      - MongoDB__DatabaseName=uploads_db
+      - AzureBlob__ConnectionString=DefaultEndpointsProtocol=https;AccountName=grupo118finalchallengesa;AccountKey=gjHqtMfmALswwikFu5+F2su6lLQ//WEDcejibcN2D+cHNGnslmiNwDqWAHRmz1ZH4dc4boxFg/vi+AStMKnK4w==;EndpointSuffix=core.windows.net;
+      - AzureBlob__ContainerName=grupo118finalchallengecontainer
+      - AzureBlob__SasExpirationMinutes=60
+      - AzureBlob__MaxRetries=3
+      - AzureBlob__RetryDelaySeconds=2
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      azurite:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=uploads_user
+      - MONGO_INITDB_ROOT_PASSWORD=uploads_password
+      - MONGO_INITDB_DATABASE=uploads_db
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    command: "azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --loose"
+    volumes:
+      - azurite-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:10000', (r) => process.exit(r.statusCode === 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  azurite-init:
+    image: mcr.microsoft.com/azure-cli:latest
+    depends_on:
+      azurite:
+        condition: service_healthy
+    environment:
+      - AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Creating container...';
+      az storage container create --name video-uploads --connection-string \"$$AZURE_STORAGE_CONNECTION_STRING\" || true;
+      echo 'Clearing existing CORS rules...';
+      az storage cors add --methods DELETE GET HEAD OPTIONS POST PUT --origins 'http://localhost:3000' --allowed-headers '*' --exposed-headers '*' --max-age 3600 --services b --connection-string "$$AZURE_STORAGE_CONNECTION_STRING";
+      echo 'Adding CORS rules...';
+      az storage cors add --methods DELETE GET HEAD OPTIONS POST PUT --origins '*' --allowed-headers '*' --exposed-headers '*' --max-age 3600 --services b --connection-string \"$$AZURE_STORAGE_CONNECTION_STRING\";
+      echo 'CORS setup complete';
+      "
+    networks:
+      - app-network
+
+volumes:
+  mongodb-data:
+  rabbitmq-data:
+  azurite-data:
+
+networks:
+  app-network:
+    driver: bridge
