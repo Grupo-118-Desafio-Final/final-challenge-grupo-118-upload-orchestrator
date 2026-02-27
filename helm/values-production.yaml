@@ -76,8 +76,8 @@ autoscaling:
   maxReplicas: 3
   targetCPUUtilizationPercentage: 70
 
-volumes: []
-volumeMounts: []
+persistence:
+  enabled: false
 
 configMap:
   enabled: false
