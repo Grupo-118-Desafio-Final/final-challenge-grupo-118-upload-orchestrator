@@ -1,0 +1,114 @@
+replicaCount: 1
+
+image:
+  repository: ${DOCKER_REGISTRY}
+  imageName: final-challenge-grupo-118-upload-orchestrator
+  tag: "${POC_IMAGE_TAG}"  # Will be set via --set or CI/CD
+  pullPolicy: IfNotPresent
+
+
+imagePullSecrets:
+  - name: final-challenge-grupo-118-upload-orchestrator-acr-secret
+
+acrCredentials:
+  enabled: true
+  registry: "${DOCKER_REGISTRY}"
+  username: "${ACR_USERNAME}"  # Will be set via --set or CI/CD
+  password: "${ACR_PASSWORD}"  # Will be set via --set or CI/CD
+
+nameOverride: "final-challenge-grupo-118-upload-orchestrator"
+fullnameOverride: "final-challenge-grupo-118-upload-orchestrator"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "final-challenge-grupo-118-upload-orchestrator-sa"
+
+service:
+  port: 80
+  instances:
+    - name: final-challenge-grupo-118-upload-orchestrator
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+      portName: http
+
+internalIngress:
+  enabled: true
+  className: "nginx-internal-static"
+  path: /uploads-api(/|$)(.*)
+  pathType: ImplementationSpecific
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  tls: []
+
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+livenessProbe:
+  httpGet:
+    path: /health  
+    port: http
+  initialDelaySeconds: 90
+  periodSeconds: 30
+  timeoutSeconds: 30
+  successThreshold: 1
+  failureThreshold: 4
+readinessProbe:
+  httpGet:
+    path: /health  
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 5
+  failureThreshold: 10
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+persistence:
+  enabled: false
+
+configMap:
+  enabled: false
+
+secret:
+  enabled: true
+  name: final-challenge-grupo-118-upload-orchestrator
+  annotations: {}
+  data:
+    #         STEPS: 2. Criação das chaves no secret, com os valores que foram mapeados dos segredos      
+    upload-orchestrator-mongo-connectionstring: "${MongoDB__ConnectionString}"
+    upload-orchestrator-mongo-databasename: "${MongoDB__DatabaseName}"
+    upload-orchestrator-azureblob-connectionstring: "${AzureBlob__ConnectionString}"
+    upload-orchestrator-azureblob-containername: "${AzureBlob__ContainerName}"
+    upload-orchestrator-rabbitmq-connectionstring: "${RabbitMQ__ConnectionString}"
+
+  #         STEPS: 3. Mapear as chaves dos segredos para variaveis de ambientes, no formato que o asp.net reconhece para sobrescrever as configs do json
+  envVars:
+    - name: MongoDB__ConnectionString
+      secretKey: upload-orchestrator-mongo-connectionstring
+    - name: MongoDB__DatabaseName
+      secretKey: upload-orchestrator-mongo-databasename
+    - name: AzureBlob__ConnectionString
+      secretKey: upload-orchestrator-azureblob-connectionstring
+    - name: AzureBlob__ContainerName
+      secretKey: upload-orchestrator-azureblob-containername
+    - name: RabbitMQ__ConnectionString
+      secretKey: upload-orchestrator-rabbitmq-connectionstring
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}  
