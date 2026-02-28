@@ -7,8 +7,8 @@ using UploadsApi.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#pragma warning disable CS0618 
-BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3; 
+#pragma warning disable CS0618
+BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
 #pragma warning restore CS0618
 
 builder.Services.AddControllers();
@@ -54,8 +54,8 @@ builder.Services.AddHealthChecks()
     .AddMongoDb(
         builder.Configuration["MongoDB:ConnectionString"]!,
         name: "mongodb")
-    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetSection("RabbitMQ:ConnectionString").Value
-        ?? $"amqp://{builder.Configuration["RabbitMQ:UserName"]}:{builder.Configuration["RabbitMQ:Password"]}@{builder.Configuration["RabbitMQ:HostName"]}:{builder.Configuration["RabbitMQ:Port"]}/",
+    .AddRabbitMQ(
+        rabbitConnectionString: builder.Configuration["RabbitMQ:Uri"]!,
         name: "rabbitmq");
 
 var app = builder.Build();

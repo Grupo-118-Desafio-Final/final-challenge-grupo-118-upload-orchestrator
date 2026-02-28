@@ -34,18 +34,10 @@ public class UploadService : IUploadService
             request.FileSize,
             request.TotalParts);
 
-        var multipartUploadId = await _storageService.InitiateMultipartUploadAsync(
-            upload.ObjectKey,
-            upload.ContentType,
-            cancellationToken);
-
-        upload.SetMultipartUploadId(multipartUploadId);
-
         await _uploadRepository.AddAsync(upload, cancellationToken);
 
         return new CreateUploadResponse(
             upload.Id,
-            upload.ObjectKey,
             upload.Status.ToString());
     }
 
@@ -70,7 +62,6 @@ public class UploadService : IUploadService
 
         var urls = await _storageService.GeneratePresignedUrlsAsync(
             upload.ObjectKey,
-            upload.MultipartUploadId!,
             upload.TotalParts,
             cancellationToken);
 
@@ -80,7 +71,7 @@ public class UploadService : IUploadService
     public async Task CompleteUploadAsync(
         Guid uploadId,
         string userId,
-        CompleteUploadRequest request,
+        string planId,
         CancellationToken cancellationToken = default)
     {
         var upload = await _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, cancellationToken)
@@ -91,30 +82,24 @@ public class UploadService : IUploadService
             throw new InvalidOperationException($"Cannot complete upload with status {upload.Status}");
         }
 
-        if (request.Parts.Count != upload.TotalParts)
-        {
-            throw new InvalidOperationException(
-                $"Expected {upload.TotalParts} parts but received {request.Parts.Count}");
-        }
-
         try
         {
-            await _storageService.CompleteMultipartUploadAsync(
+            await _storageService.CommitUploadAsync(
                 upload.ObjectKey,
-                upload.MultipartUploadId!,
-                request.Parts,
+                upload.TotalParts,
                 cancellationToken);
 
-            upload.StartProcessing();
+            upload.Complete();
             await _uploadRepository.UpdateAsync(upload, cancellationToken);
 
+            var processing = Processing.Create(userId, upload.ObjectKey);
+            var blobUrl = _storageService.GetBlobUrl(upload.ObjectKey);
+
             var videoUploadedEvent = new VideoUploadedEvent(
-                upload.Id,
-                upload.UserId,
-                upload.ObjectKey,
-                upload.FileName,
-                upload.ContentType,
-                upload.FileSize,
+                userId,
+                planId,
+                processing.Id,
+                blobUrl,
                 DateTime.UtcNow);
 
             await _messagePublisher.PublishAsync(videoUploadedEvent, "video.uploaded", cancellationToken);
@@ -183,14 +168,7 @@ public class UploadService : IUploadService
             throw new InvalidOperationException($"Cannot abort upload with status {upload.Status}");
         }
 
-        if (!string.IsNullOrEmpty(upload.MultipartUploadId))
-        {
-            await _storageService.AbortMultipartUploadAsync(
-                upload.ObjectKey,
-                upload.MultipartUploadId,
-                cancellationToken);
-        }
-
+        await _storageService.DeleteAsync(upload.ObjectKey, cancellationToken);
         await _uploadRepository.DeleteAsync(upload, cancellationToken);
     }
 

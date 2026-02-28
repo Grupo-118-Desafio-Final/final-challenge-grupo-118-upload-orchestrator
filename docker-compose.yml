@@ -14,10 +14,7 @@ services:
       - AzureBlob__SasExpirationMinutes=60
       - AzureBlob__MaxRetries=3
       - AzureBlob__RetryDelaySeconds=2
-      - RabbitMQ__HostName=rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=guest
-      - RabbitMQ__Password=guest
+      - RabbitMQ__Uri=amqp://guest:guest@rabbitmq:5672/
     depends_on:
       mongodb:
         condition: service_healthy

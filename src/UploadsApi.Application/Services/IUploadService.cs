@@ -17,7 +17,7 @@ public interface IUploadService
     Task CompleteUploadAsync(
         Guid uploadId,
         string userId,
-        CompleteUploadRequest request,
+        string planId,
         CancellationToken cancellationToken = default);
 
     Task<UploadResponse?> GetUploadAsync(

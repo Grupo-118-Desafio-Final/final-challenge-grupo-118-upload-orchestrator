@@ -11,16 +11,13 @@ public class UploadsController : ControllerBase
 {
     private readonly IUploadService _uploadService;
     private readonly IValidator<CreateUploadRequest> _createUploadValidator;
-    private readonly IValidator<CompleteUploadRequest> _completeUploadValidator;
 
     public UploadsController(
         IUploadService uploadService,
-        IValidator<CreateUploadRequest> createUploadValidator,
-        IValidator<CompleteUploadRequest> completeUploadValidator)
+        IValidator<CreateUploadRequest> createUploadValidator)
     {
         _uploadService = uploadService;
         _createUploadValidator = createUploadValidator;
-        _completeUploadValidator = completeUploadValidator;
     }
 
     [HttpPost]
@@ -63,26 +60,12 @@ public class UploadsController : ControllerBase
 
     [HttpPost("{id:guid}/complete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CompleteUpload(
-        Guid id,
-        [FromBody] CompleteUploadRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> CompleteUpload(Guid id, CancellationToken cancellationToken)
     {
-        var validationResult = await _completeUploadValidator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new ValidationProblemDetails(
-                validationResult.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(e => e.ErrorMessage).ToArray())));
-        }
-
         var userId = GetUserId();
-        await _uploadService.CompleteUploadAsync(id, userId, request, cancellationToken);
+        var planId = GetPlanId();
+        await _uploadService.CompleteUploadAsync(id, userId, planId, cancellationToken);
 
         return NoContent();
     }
@@ -141,5 +124,17 @@ public class UploadsController : ControllerBase
         }
 
         return userId;
+    }
+
+    private string GetPlanId()
+    {
+        var planId = Request.Headers["X-Plan-Id"].FirstOrDefault();
+
+        if (string.IsNullOrEmpty(planId))
+        {
+            throw new UnauthorizedAccessException("Plan ID not found in request headers");
+        }
+
+        return planId;
     }
 }

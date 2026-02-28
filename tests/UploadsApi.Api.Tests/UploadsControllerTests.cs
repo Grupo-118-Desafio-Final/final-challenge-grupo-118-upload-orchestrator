@@ -18,18 +18,13 @@ public class UploadsControllerTests : IClassFixture<CustomWebApplicationFactory>
         _factory = factory;
         _client = factory.CreateClient();
         _client.DefaultRequestHeaders.Add("X-User-Id", "test-user-123");
+        _client.DefaultRequestHeaders.Add("X-Plan-Id", "test-plan-456");
     }
 
     [Fact]
     public async Task CreateUpload_WhenValidRequest_ShouldReturn201Created()
     {
         // Arrange
-        _factory.StorageService.InitiateMultipartUploadAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<CancellationToken>())
-            .Returns("multipart-upload-123");
-
         var request = new CreateUploadRequest("test-video.mp4", "video/mp4", 1024 * 1024 * 100, 10);
 
         // Act
@@ -141,7 +136,6 @@ public class UploadsControllerTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var userId = "test-user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 1);
-        upload.SetMultipartUploadId("multipart-123");
 
         _factory.UploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);

@@ -30,13 +30,6 @@ public class UploadServiceTests
         // Arrange
         var userId = "user-123";
         var request = new CreateUploadRequest("test.mp4", "video/mp4", 1024 * 1024, 1);
-        var multipartUploadId = "multipart-123";
-
-        _storageService.InitiateMultipartUploadAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<CancellationToken>())
-            .Returns(multipartUploadId);
 
         // Act
         var result = await _sut.CreateUploadAsync(userId, request);
@@ -44,7 +37,6 @@ public class UploadServiceTests
         // Assert
         result.Should().NotBeNull();
         result.UploadId.Should().NotBeEmpty();
-        result.ObjectKey.Should().Contain(userId);
         result.Status.Should().Be("Pending");
 
         await _uploadRepository.Received(1).AddAsync(Arg.Any<Upload>(), Arg.Any<CancellationToken>());
@@ -57,7 +49,6 @@ public class UploadServiceTests
         var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 2);
-        upload.SetMultipartUploadId("multipart-123");
 
         var expectedUrls = new List<PresignedUrlInfo>
         {
@@ -69,7 +60,6 @@ public class UploadServiceTests
             .Returns(upload);
 
         _storageService.GeneratePresignedUrlsAsync(
-            Arg.Any<string>(),
             Arg.Any<string>(),
             2,
             Arg.Any<CancellationToken>())
@@ -106,59 +96,52 @@ public class UploadServiceTests
         // Arrange
         var uploadId = Guid.NewGuid();
         var userId = "user-123";
+        var planId = "plan-456";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 2);
-        upload.SetMultipartUploadId("multipart-123");
         upload.StartUploading();
-
-        var request = new CompleteUploadRequest(new List<PartInfo>
-        {
-            new(1, "etag1"),
-            new(2, "etag2")
-        });
 
         _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
+        _storageService.GetBlobUrl(Arg.Any<string>())
+            .Returns("https://storage.example.com/blob");
+
         // Act
-        await _sut.CompleteUploadAsync(uploadId, userId, request);
+        await _sut.CompleteUploadAsync(uploadId, userId, planId);
 
         // Assert
-        await _storageService.Received(1).CompleteMultipartUploadAsync(
+        await _storageService.Received(1).CommitUploadAsync(
             Arg.Any<string>(),
-            "multipart-123",
-            Arg.Any<IEnumerable<PartInfo>>(),
+            2,
             Arg.Any<CancellationToken>());
 
         await _messagePublisher.Received(1).PublishAsync(
-            Arg.Any<VideoUploadedEvent>(),
+            Arg.Is<VideoUploadedEvent>(e =>
+                e.UserId == userId &&
+                e.PlanId == planId &&
+                e.ProcessingId != Guid.Empty &&
+                e.BlobUrl == "https://storage.example.com/blob"),
             "video.uploaded",
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task CompleteUploadAsync_WhenPartsMismatch_ShouldThrowInvalidOperationException()
+    public async Task CompleteUploadAsync_WhenNotUploading_ShouldThrowInvalidOperationException()
     {
         // Arrange
         var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 2);
-        upload.SetMultipartUploadId("multipart-123");
-        upload.StartUploading();
-
-        var request = new CompleteUploadRequest(new List<PartInfo>
-        {
-            new(1, "etag1") // Only 1 part, but upload expects 2
-        });
 
         _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         // Act
-        var act = () => _sut.CompleteUploadAsync(uploadId, userId, request);
+        var act = () => _sut.CompleteUploadAsync(uploadId, userId, "plan-456");
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Expected 2 parts but received 1");
+            .WithMessage("Cannot complete upload with status Pending");
     }
 
     [Fact]
@@ -230,7 +213,6 @@ public class UploadServiceTests
         var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 1);
-        upload.SetMultipartUploadId("multipart-123");
 
         _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
@@ -239,9 +221,8 @@ public class UploadServiceTests
         await _sut.AbortUploadAsync(uploadId, userId);
 
         // Assert
-        await _storageService.Received(1).AbortMultipartUploadAsync(
+        await _storageService.Received(1).DeleteAsync(
             Arg.Any<string>(),
-            "multipart-123",
             Arg.Any<CancellationToken>());
 
         await _uploadRepository.Received(1).DeleteAsync(upload, Arg.Any<CancellationToken>());
@@ -254,10 +235,8 @@ public class UploadServiceTests
         var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 1);
-        upload.SetMultipartUploadId("multipart-123");
         upload.StartUploading();
-        upload.StartProcessing();
-        upload.MarkAsCompleted();
+        upload.Complete();
 
         _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
             .Returns(upload);

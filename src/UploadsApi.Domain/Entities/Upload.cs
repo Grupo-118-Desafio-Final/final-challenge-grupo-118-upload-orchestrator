@@ -10,7 +10,6 @@ public class Upload
     public string ContentType { get; private set; } = string.Empty;
     public long FileSize { get; private set; }
     public string ObjectKey { get; private set; } = string.Empty;
-    public string? MultipartUploadId { get; private set; }
     public UploadStatus Status { get; private set; }
     public int TotalParts { get; private set; }
     public string? ErrorMessage { get; private set; }
@@ -44,12 +43,6 @@ public class Upload
         return upload;
     }
 
-    public void SetMultipartUploadId(string multipartUploadId)
-    {
-        MultipartUploadId = multipartUploadId;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
     public void StartUploading()
     {
         if (Status != UploadStatus.Pending)
@@ -61,22 +54,11 @@ public class Upload
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void StartProcessing()
+    public void Complete()
     {
         if (Status != UploadStatus.Uploading)
         {
-            throw new InvalidOperationException($"Cannot start processing from status {Status}");
-        }
-
-        Status = UploadStatus.Processing;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void MarkAsCompleted()
-    {
-        if (Status != UploadStatus.Processing)
-        {
-            throw new InvalidOperationException($"Cannot mark as completed from status {Status}");
+            throw new InvalidOperationException($"Cannot complete upload from status {Status}");
         }
 
         Status = UploadStatus.Completed;

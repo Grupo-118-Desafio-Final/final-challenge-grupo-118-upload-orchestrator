@@ -18,20 +18,8 @@ public class AzureBlobStorageService : IStorageService
         _options = options.Value;
     }
 
-    public Task<string> InitiateMultipartUploadAsync(
-        string objectKey,
-        string contentType,
-        CancellationToken cancellationToken = default)
-    {
-        // Azure Blob Storage doesn't require explicit multipart upload initiation.
-        // Blocks are staged independently and committed at the end.
-        // We return the objectKey as a pseudo-uploadId since we need a consistent identifier.
-        return Task.FromResult(objectKey);
-    }
-
     public Task<IReadOnlyList<PresignedUrlInfo>> GeneratePresignedUrlsAsync(
         string objectKey,
-        string uploadId,
         int totalParts,
         CancellationToken cancellationToken = default)
     {
@@ -45,22 +33,19 @@ public class AzureBlobStorageService : IStorageService
         {
             var blockId = GenerateBlockId(partNumber);
 
-            // Create SAS token for the blob
             var sasBuilder = new BlobSasBuilder
             {
                 BlobContainerName = _options.ContainerName,
                 BlobName = objectKey,
-                Resource = "b", // blob
+                Resource = "b",
                 ExpiresOn = expiresOn
             };
             sasBuilder.SetPermissions(BlobSasPermissions.Write);
 
             var sasUri = blobClient.GenerateSasUri(sasBuilder);
 
-            // Append block query parameters to the SAS URL
             var urlWithBlockId = $"{sasUri}&comp=block&blockid={Uri.EscapeDataString(blockId)}";
 
-            // Rewrite URL for public/browser access if PublicBlobEndpoint is configured
             if (!string.IsNullOrEmpty(_options.PublicBlobEndpoint))
             {
                 var internalEndpoint = _blobServiceClient.Uri.ToString().TrimEnd('/');
@@ -74,39 +59,22 @@ public class AzureBlobStorageService : IStorageService
         return Task.FromResult<IReadOnlyList<PresignedUrlInfo>>(urls);
     }
 
-    public async Task CompleteMultipartUploadAsync(
+    public async Task CommitUploadAsync(
         string objectKey,
-        string uploadId,
-        IEnumerable<PartInfo> parts,
+        int totalParts,
         CancellationToken cancellationToken = default)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
         var blobClient = containerClient.GetBlockBlobClient(objectKey);
 
-        // Generate block IDs in order from part numbers
-        var blockIds = parts
-            .OrderBy(p => p.PartNumber)
-            .Select(p => GenerateBlockId(p.PartNumber))
+        var blockIds = Enumerable.Range(1, totalParts)
+            .Select(GenerateBlockId)
             .ToList();
 
-        // Commit all staged blocks to create the final blob
         await blobClient.CommitBlockListAsync(blockIds, cancellationToken: cancellationToken);
     }
 
-    public async Task AbortMultipartUploadAsync(
-        string objectKey,
-        string uploadId,
-        CancellationToken cancellationToken = default)
-    {
-        // In Azure Blob Storage, uncommitted blocks automatically expire after 7 days.
-        // Optionally, we can delete the blob if it exists (in case of partial commits).
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
-        var blobClient = containerClient.GetBlobClient(objectKey);
-
-        await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
-    }
-
-    public async Task DeleteObjectAsync(
+    public async Task DeleteAsync(
         string objectKey,
         CancellationToken cancellationToken = default)
     {
@@ -116,13 +84,25 @@ public class AzureBlobStorageService : IStorageService
         await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
     }
 
-    /// <summary>
-    /// Generates a Base64-encoded block ID from the part number.
-    /// Azure requires block IDs to be consistent in length and Base64-encoded.
-    /// </summary>
+    public string GetBlobUrl(string objectKey)
+    {
+        var containerClient = _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
+        var blobClient = containerClient.GetBlobClient(objectKey);
+
+        var url = blobClient.Uri.ToString();
+
+        if (!string.IsNullOrEmpty(_options.PublicBlobEndpoint))
+        {
+            var internalEndpoint = _blobServiceClient.Uri.ToString().TrimEnd('/');
+            var publicEndpoint = _options.PublicBlobEndpoint.TrimEnd('/');
+            url = url.Replace(internalEndpoint, publicEndpoint);
+        }
+
+        return url;
+    }
+
     private static string GenerateBlockId(int partNumber)
     {
-        // Pad to 6 digits to ensure consistent length (supports up to 999,999 parts)
         var paddedPartNumber = partNumber.ToString("D6");
         return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(paddedPartNumber));
     }

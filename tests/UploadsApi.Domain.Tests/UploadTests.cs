@@ -13,7 +13,7 @@ public class UploadTests
         var userId = "user-123";
         var fileName = "test-video.mp4";
         var contentType = "video/mp4";
-        var fileSize = 1024L * 1024 * 100; // 100 MB
+        var fileSize = 1024L * 1024 * 100;
         var totalParts = 10;
 
         // Act
@@ -62,47 +62,32 @@ public class UploadTests
     }
 
     [Fact]
-    public void StartProcessing_WhenUploading_ShouldChangeStatusToProcessing()
+    public void Complete_WhenUploading_ShouldChangeStatusToCompleted()
     {
         // Arrange
         var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
         upload.StartUploading();
 
         // Act
-        upload.StartProcessing();
-
-        // Assert
-        upload.Status.Should().Be(UploadStatus.Processing);
-    }
-
-    [Fact]
-    public void StartProcessing_WhenNotUploading_ShouldThrowException()
-    {
-        // Arrange
-        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
-
-        // Act
-        var act = () => upload.StartProcessing();
-
-        // Assert
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Cannot start processing from status Pending");
-    }
-
-    [Fact]
-    public void MarkAsCompleted_WhenProcessing_ShouldChangeStatusToCompleted()
-    {
-        // Arrange
-        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
-        upload.StartUploading();
-        upload.StartProcessing();
-
-        // Act
-        upload.MarkAsCompleted();
+        upload.Complete();
 
         // Assert
         upload.Status.Should().Be(UploadStatus.Completed);
         upload.CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Complete_WhenNotUploading_ShouldThrowException()
+    {
+        // Arrange
+        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
+
+        // Act
+        var act = () => upload.Complete();
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot complete upload from status Pending");
     }
 
     [Fact]
@@ -118,20 +103,5 @@ public class UploadTests
         // Assert
         upload.Status.Should().Be(UploadStatus.Failed);
         upload.ErrorMessage.Should().Be(errorMessage);
-    }
-
-    [Fact]
-    public void SetMultipartUploadId_ShouldSetIdAndUpdateTimestamp()
-    {
-        // Arrange
-        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
-        var multipartUploadId = "upload-id-123";
-
-        // Act
-        upload.SetMultipartUploadId(multipartUploadId);
-
-        // Assert
-        upload.MultipartUploadId.Should().Be(multipartUploadId);
-        upload.UpdatedAt.Should().NotBeNull();
     }
 }
