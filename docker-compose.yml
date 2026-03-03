@@ -7,14 +7,14 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - MongoDB__ConnectionString=mongodb://uploads_user:uploads_password@mongodb:27017/uploads_db?authSource=admin
+      - MongoDB__ConnectionString={{MongoDB__ConnectionString}}
       - MongoDB__DatabaseName=uploads_db
-      - AzureBlob__ConnectionString=DefaultEndpointsProtocol=https;AccountName=grupo118finalchallengesa;AccountKey=gjHqtMfmALswwikFu5+F2su6lLQ//WEDcejibcN2D+cHNGnslmiNwDqWAHRmz1ZH4dc4boxFg/vi+AStMKnK4w==;EndpointSuffix=core.windows.net;
-      - AzureBlob__ContainerName=grupo118finalchallengecontainer
+      - AzureBlob__ConnectionString={{AzureBlob__ConnectionString}}
+      - AzureBlob__ContainerName={{AzureBlob__ContainerName}}
       - AzureBlob__SasExpirationMinutes=60
       - AzureBlob__MaxRetries=3
       - AzureBlob__RetryDelaySeconds=2
-      - RabbitMQ__Uri=amqp://guest:guest@rabbitmq:5672/
+      - RabbitMQ__Uri={{RabbitMQ__Uri}}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -84,7 +84,7 @@ services:
       azurite:
         condition: service_healthy
     environment:
-      - AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+      - AZURE_STORAGE_CONNECTION_STRING={{AzureBlob__ConnectionString}}
     entrypoint: >
       /bin/sh -c "
       echo 'Creating container...';
