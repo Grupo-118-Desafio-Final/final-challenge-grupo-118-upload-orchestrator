@@ -103,5 +103,73 @@ public class UploadTests
         // Assert
         upload.Status.Should().Be(UploadStatus.Failed);
         upload.ErrorMessage.Should().Be(errorMessage);
+        upload.UpdatedAt.Should().NotBeNull();
+        upload.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void MarkAsFailed_WhenAlreadyUploading_ShouldSetStatusToFailed()
+    {
+        // Arrange
+        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
+        upload.StartUploading();
+
+        // Act
+        upload.MarkAsFailed("Network error");
+
+        // Assert
+        upload.Status.Should().Be(UploadStatus.Failed);
+    }
+
+    [Fact]
+    public void Complete_WhenUploading_ShouldSetUpdatedAt()
+    {
+        // Arrange
+        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
+        upload.StartUploading();
+
+        // Act
+        upload.Complete();
+
+        // Assert
+        upload.UpdatedAt.Should().NotBeNull();
+        upload.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+        upload.CompletedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void Create_ShouldGenerateUniqueIds()
+    {
+        // Act
+        var upload1 = Upload.Create("user-1", "video1.mp4", "video/mp4", 1024, 1);
+        var upload2 = Upload.Create("user-2", "video2.mp4", "video/mp4", 2048, 2);
+
+        // Assert
+        upload1.Id.Should().NotBe(upload2.Id);
+    }
+
+    [Fact]
+    public void Create_ShouldNotSetUpdatedAtOrCompletedAt()
+    {
+        // Act
+        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
+
+        // Assert
+        upload.UpdatedAt.Should().BeNull();
+        upload.CompletedAt.Should().BeNull();
+        upload.ErrorMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public void StartUploading_WhenPending_ShouldSetUpdatedAt()
+    {
+        // Arrange
+        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 1);
+
+        // Act
+        upload.StartUploading();
+
+        // Assert
+        upload.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
 }

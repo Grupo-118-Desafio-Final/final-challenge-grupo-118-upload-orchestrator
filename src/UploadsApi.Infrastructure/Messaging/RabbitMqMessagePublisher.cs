@@ -9,6 +9,11 @@ namespace UploadsApi.Infrastructure.Messaging;
 
 public class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly RabbitMqOptions _options;
     private readonly IConnection _connection;
     private readonly IModel _channel;
@@ -36,10 +41,7 @@ public class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
     public Task PublishAsync<T>(T message, string routingKey, CancellationToken cancellationToken = default)
         where T : class
     {
-        var json = JsonSerializer.Serialize(message, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var json = JsonSerializer.Serialize(message, JsonOptions);
 
         var body = Encoding.UTF8.GetBytes(json);
 

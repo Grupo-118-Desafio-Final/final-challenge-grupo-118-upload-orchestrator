@@ -76,6 +76,6 @@ app.UseHttpsRedirection();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-app.Run();
+await app.RunAsync();
 
-public partial class Program { }
+public static partial class Program { }

@@ -5,6 +5,11 @@ namespace UploadsApi.Api.Middleware;
 
 public class ExceptionHandlingMiddleware
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
@@ -57,10 +62,7 @@ public class ExceptionHandlingMiddleware
             traceId = context.TraceIdentifier
         };
 
-        var json = JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var json = JsonSerializer.Serialize(problemDetails, JsonOptions);
 
         await context.Response.WriteAsync(json);
     }

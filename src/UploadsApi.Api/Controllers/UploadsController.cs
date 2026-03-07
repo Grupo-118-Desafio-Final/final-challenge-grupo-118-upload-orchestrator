@@ -25,8 +25,12 @@ public class UploadsController : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateUpload(
         [FromBody] CreateUploadRequest request,
+        [FromHeader(Name = "X-User-Id")] string userId,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in request headers");
+
         var validationResult = await _createUploadValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
@@ -38,7 +42,6 @@ public class UploadsController : ControllerBase
                         g => g.Select(e => e.ErrorMessage).ToArray())));
         }
 
-        var userId = GetUserId();
         var response = await _uploadService.CreateUploadAsync(userId, request, cancellationToken);
 
         return CreatedAtAction(
@@ -50,9 +53,14 @@ public class UploadsController : ControllerBase
     [HttpGet("{id:guid}/presigned-urls")]
     [ProducesResponseType(typeof(PresignedUrlsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPresignedUrls(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPresignedUrls(
+        Guid id,
+        [FromHeader(Name = "X-User-Id")] string userId,
+        CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in request headers");
+
         var response = await _uploadService.GetPresignedUrlsAsync(id, userId, cancellationToken);
 
         return Ok(response);
@@ -61,10 +69,18 @@ public class UploadsController : ControllerBase
     [HttpPost("{id:guid}/complete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CompleteUpload(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> CompleteUpload(
+        Guid id,
+        [FromHeader(Name = "X-User-Id")] string userId,
+        [FromHeader(Name = "X-Plan-Id")] string planId,
+        CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
-        var planId = GetPlanId();
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in request headers");
+
+        if (string.IsNullOrEmpty(planId))
+            throw new UnauthorizedAccessException("Plan ID not found in request headers");
+
         await _uploadService.CompleteUploadAsync(id, userId, planId, cancellationToken);
 
         return NoContent();
@@ -73,15 +89,18 @@ public class UploadsController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<UploadResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUploads(
+        [FromHeader(Name = "X-User-Id")] string userId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in request headers");
+
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 100) pageSize = 100;
 
-        var userId = GetUserId();
         var response = await _uploadService.GetUploadsAsync(userId, page, pageSize, cancellationToken);
 
         return Ok(response);
@@ -90,9 +109,14 @@ public class UploadsController : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(UploadResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetUpload(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUpload(
+        Guid id,
+        [FromHeader(Name = "X-User-Id")] string userId,
+        CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in request headers");
+
         var response = await _uploadService.GetUploadAsync(id, userId, cancellationToken);
 
         if (response is null)
@@ -106,35 +130,16 @@ public class UploadsController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AbortUpload(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> AbortUpload(
+        Guid id,
+        [FromHeader(Name = "X-User-Id")] string userId,
+        CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in request headers");
+
         await _uploadService.AbortUploadAsync(id, userId, cancellationToken);
 
         return NoContent();
-    }
-
-    private string GetUserId()
-    {
-        var userId = Request.Headers["X-User-Id"].FirstOrDefault();
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            throw new UnauthorizedAccessException("User ID not found in request headers");
-        }
-
-        return userId;
-    }
-
-    private string GetPlanId()
-    {
-        var planId = Request.Headers["X-Plan-Id"].FirstOrDefault();
-
-        if (string.IsNullOrEmpty(planId))
-        {
-            throw new UnauthorizedAccessException("Plan ID not found in request headers");
-        }
-
-        return planId;
     }
 }
