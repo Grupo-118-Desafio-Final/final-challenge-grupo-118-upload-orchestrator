@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using UploadsApi.Application.DTOs;
 using UploadsApi.Application.Services;
+using UploadsApi.Domain.Exceptions;
 
 namespace UploadsApi.Api.Controllers;
 
@@ -29,7 +30,7 @@ public class UploadsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(userId))
-            throw new UnauthorizedAccessException("User ID not found in request headers");
+            throw new MissingUserIdException();
 
         var validationResult = await _createUploadValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -59,7 +60,7 @@ public class UploadsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(userId))
-            throw new UnauthorizedAccessException("User ID not found in request headers");
+            throw new MissingUserIdException();
 
         var response = await _uploadService.GetPresignedUrlsAsync(id, userId, cancellationToken);
 
@@ -76,10 +77,10 @@ public class UploadsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(userId))
-            throw new UnauthorizedAccessException("User ID not found in request headers");
+            throw new MissingUserIdException();
 
         if (string.IsNullOrEmpty(planId))
-            throw new UnauthorizedAccessException("Plan ID not found in request headers");
+            throw new MissingPlanIdException();
 
         await _uploadService.CompleteUploadAsync(id, userId, planId, cancellationToken);
 
@@ -95,7 +96,7 @@ public class UploadsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(userId))
-            throw new UnauthorizedAccessException("User ID not found in request headers");
+            throw new MissingUserIdException();
 
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
@@ -115,7 +116,7 @@ public class UploadsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(userId))
-            throw new UnauthorizedAccessException("User ID not found in request headers");
+            throw new MissingUserIdException();
 
         var response = await _uploadService.GetUploadAsync(id, userId, cancellationToken);
 
@@ -136,7 +137,7 @@ public class UploadsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(userId))
-            throw new UnauthorizedAccessException("User ID not found in request headers");
+            throw new MissingUserIdException();
 
         await _uploadService.AbortUploadAsync(id, userId, cancellationToken);
 
