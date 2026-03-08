@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using MongoDB.Driver;
 using UploadsApi.Application.Interfaces;
 using UploadsApi.Domain.Entities;
 
 namespace UploadsApi.Infrastructure.Persistence.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class MongoDbUploadRepository : IUploadRepository
 {
     private readonly MongoDbContext _context;

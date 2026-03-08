@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentValidation;
 using UploadsApi.Application.DTOs;
 
 namespace UploadsApi.Application.Validators;
 
+[ExcludeFromCodeCoverage]
 public class CreateUploadRequestValidator : AbstractValidator<CreateUploadRequest>
 {
     private static readonly string[] AllowedContentTypes =

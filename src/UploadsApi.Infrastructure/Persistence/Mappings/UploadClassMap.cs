@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -9,6 +10,7 @@ using UploadsApi.Domain.Enums;
 
 namespace UploadsApi.Infrastructure.Persistence.Mappings;
 
+[ExcludeFromCodeCoverage]
 public static class UploadClassMap
 {
     public static void Register()

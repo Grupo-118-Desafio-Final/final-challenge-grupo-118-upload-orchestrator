@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UploadsApi.Application.DTOs;
 
+[ExcludeFromCodeCoverage]
 public record UploadResponse(
     Guid Id,
     string FileName,

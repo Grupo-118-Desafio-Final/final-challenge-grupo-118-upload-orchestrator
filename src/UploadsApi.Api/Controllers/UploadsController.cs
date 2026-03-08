@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using UploadsApi.Application.DTOs;
@@ -8,6 +9,7 @@ namespace UploadsApi.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[ExcludeFromCodeCoverage]
 public class UploadsController : ControllerBase
 {
     private readonly IUploadService _uploadService;

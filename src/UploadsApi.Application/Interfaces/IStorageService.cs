@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UploadsApi.Application.Interfaces;
 
 public interface IStorageService
@@ -19,4 +21,5 @@ public interface IStorageService
     string GetBlobUrl(string objectKey);
 }
 
+[ExcludeFromCodeCoverage]
 public record PresignedUrlInfo(int PartNumber, string Url);

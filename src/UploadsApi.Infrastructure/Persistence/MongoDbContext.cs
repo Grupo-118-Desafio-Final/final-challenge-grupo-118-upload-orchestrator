@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using UploadsApi.Domain.Entities;
@@ -6,6 +7,7 @@ using UploadsApi.Infrastructure.Persistence.Mappings;
 
 namespace UploadsApi.Infrastructure.Persistence;
 
+[ExcludeFromCodeCoverage]
 public class MongoDbContext
 {
     private readonly IMongoDatabase? _database;

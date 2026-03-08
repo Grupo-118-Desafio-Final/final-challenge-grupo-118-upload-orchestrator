@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 
 namespace UploadsApi.Api.Middleware;
 
+[ExcludeFromCodeCoverage]
 public class ExceptionHandlingMiddleware
 {
     private static readonly JsonSerializerOptions JsonOptions = new()

@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UploadsApi.Infrastructure.Options;
 
+[ExcludeFromCodeCoverage]
 public class MongoDbOptions
 {
     public const string SectionName = "MongoDB";

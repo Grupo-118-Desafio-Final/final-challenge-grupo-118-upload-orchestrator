@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UploadsApi.Infrastructure.Options;
 
+[ExcludeFromCodeCoverage]
 public class AzureBlobOptions
 {
     public const string SectionName = "AzureBlob";

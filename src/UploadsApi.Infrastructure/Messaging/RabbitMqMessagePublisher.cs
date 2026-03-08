@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,7 @@ using UploadsApi.Infrastructure.Options;
 
 namespace UploadsApi.Infrastructure.Messaging;
 
+[ExcludeFromCodeCoverage]
 public class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new()

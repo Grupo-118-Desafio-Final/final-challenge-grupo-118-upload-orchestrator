@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
@@ -7,6 +8,7 @@ using UploadsApi.Infrastructure.Options;
 
 namespace UploadsApi.Infrastructure.Storage;
 
+[ExcludeFromCodeCoverage]
 public class AzureBlobStorageService : IStorageService
 {
     private readonly BlobServiceClient _blobServiceClient;
