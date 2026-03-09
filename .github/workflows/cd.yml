@@ -37,7 +37,8 @@ jobs:
             "MongoDB__DatabaseName":"APPLICATION_MONGODB_DATABASENAME",
             "AzureBlob__ConnectionString":"APPLICATION_BLOBSTORAGE_CONNECTIONSTRING",
             "AzureBlob__ContainerName":"APPLICATION_BLOBSTORAGE_CONTAINERNAME",
-            "RabbitMQ__ConnectionString":"APPLICATION_MESSAGING_CONNECTIONSTRING"
+            "RabbitMQ__ConnectionString":"APPLICATION_MESSAGING_CONNECTIONSTRING",
+            "OpenTelemetry__Url": "GRAFANA_OTLP_URL"        
         }
       variables_mapping: |
         {
