@@ -1,0 +1,30 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, feature/implements-upload-api ]
+
+permissions:
+  pull-requests: write  # Required for PR comments
+  contents: write
+  issues: write  # Optional, for issue comments
+
+jobs:
+  ci:
+    uses: Grupo-118-Desafio-Final/final-challenge-grupo-118-template-pipeline/.github/workflows/dotnet-ci-template.yml@main
+    with:
+      sonar-project-key: 'final-challenge-grupo-118-upload-orchestrator'
+      sonar-organization: 'grupo-118-desafio-final'
+      solution-path: './UploadsApi.sln'
+      test-projects: './UploadsApi.sln'
+      dotnet-version: '8.0.x'
+      build-configuration: 'Release'
+      dockerfile-path: './Dockerfile'
+      image-name: 'final-challenge-grupo-118-upload-orchestrator'
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      ACR_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}

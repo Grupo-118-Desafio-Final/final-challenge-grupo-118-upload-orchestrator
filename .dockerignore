@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+.dockerignore
+docker-compose*.yml
+helm/
+tests/
+**/*.md
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
