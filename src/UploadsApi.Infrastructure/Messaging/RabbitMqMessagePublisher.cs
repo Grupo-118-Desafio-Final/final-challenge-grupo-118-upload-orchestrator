@@ -53,9 +53,8 @@ public class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
         properties.MessageId = Guid.NewGuid().ToString();
         properties.Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
-        _channel.BasicPublish(
-            exchange: _options.ExchangeName,
-            routingKey: routingKey,
+        _channel.BasicPublish(string.Empty,
+            routingKey: _options.ExchangeName,
             basicProperties: properties,
             body: body);
 
