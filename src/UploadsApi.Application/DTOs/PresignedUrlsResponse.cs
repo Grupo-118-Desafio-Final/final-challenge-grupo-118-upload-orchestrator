@@ -5,5 +5,5 @@ namespace UploadsApi.Application.DTOs;
 
 [ExcludeFromCodeCoverage]
 public record PresignedUrlsResponse(
-    Guid UploadId,
+    string UploadId,
     IReadOnlyList<PresignedUrlInfo> Urls);

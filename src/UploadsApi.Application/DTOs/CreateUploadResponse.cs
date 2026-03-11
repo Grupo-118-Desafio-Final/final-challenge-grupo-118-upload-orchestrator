@@ -4,5 +4,5 @@ namespace UploadsApi.Application.DTOs;
 
 [ExcludeFromCodeCoverage]
 public record CreateUploadResponse(
-    Guid UploadId,
+    string UploadId,
     string Status);

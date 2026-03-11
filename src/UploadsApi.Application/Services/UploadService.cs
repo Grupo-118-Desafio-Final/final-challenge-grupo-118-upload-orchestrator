@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using UploadsApi.Application.DTOs;
 using UploadsApi.Application.Interfaces;
 using UploadsApi.Domain.Entities;
@@ -37,16 +38,21 @@ public class UploadService : IUploadService
         await _uploadRepository.AddAsync(upload, cancellationToken);
 
         return new CreateUploadResponse(
-            upload.Id,
+            upload.Id.ToString(),
             upload.Status.ToString());
     }
 
     public async Task<PresignedUrlsResponse> GetPresignedUrlsAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         CancellationToken cancellationToken = default)
     {
-        var upload = await _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, cancellationToken)
+        if (!ObjectId.TryParse(uploadId, out var objectId))
+        {
+            throw new ArgumentException($"Invalid upload ID format: {uploadId}", nameof(uploadId));
+        }
+
+        var upload = await _uploadRepository.GetByIdAndUserIdAsync(objectId, userId, cancellationToken)
             ?? throw new KeyNotFoundException($"Upload with ID {uploadId} not found");
 
         if (upload.Status != UploadStatus.Pending && upload.Status != UploadStatus.Uploading)
@@ -65,16 +71,21 @@ public class UploadService : IUploadService
             upload.TotalParts,
             cancellationToken);
 
-        return new PresignedUrlsResponse(upload.Id, urls);
+        return new PresignedUrlsResponse(upload.Id.ToString(), urls);
     }
 
     public async Task CompleteUploadAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         string planId,
         CancellationToken cancellationToken = default)
     {
-        var upload = await _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, cancellationToken)
+        if (!ObjectId.TryParse(uploadId, out var objectId))
+        {
+            throw new ArgumentException($"Invalid upload ID format: {uploadId}", nameof(uploadId));
+        }
+
+        var upload = await _uploadRepository.GetByIdAndUserIdAsync(objectId, userId, cancellationToken)
             ?? throw new KeyNotFoundException($"Upload with ID {uploadId} not found");
 
         if (upload.Status != UploadStatus.Uploading)
@@ -98,7 +109,7 @@ public class UploadService : IUploadService
             var videoUploadedEvent = new VideoUploadedEvent(
                 userId,
                 planId,
-                processing.Id,
+                upload.Id.ToString(),
                 blobUrl,
                 DateTime.UtcNow);
 
@@ -110,7 +121,7 @@ public class UploadService : IUploadService
             await _uploadRepository.UpdateAsync(upload, cancellationToken);
 
             var uploadFailedEvent = new UploadFailedEvent(
-                upload.Id,
+                upload.Id.ToString(),
                 upload.UserId,
                 upload.FileName,
                 ex.Message,
@@ -123,11 +134,16 @@ public class UploadService : IUploadService
     }
 
     public async Task<UploadResponse?> GetUploadAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         CancellationToken cancellationToken = default)
     {
-        var upload = await _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, cancellationToken);
+        if (!ObjectId.TryParse(uploadId, out var objectId))
+        {
+            throw new ArgumentException($"Invalid upload ID format: {uploadId}", nameof(uploadId));
+        }
+
+        var upload = await _uploadRepository.GetByIdAndUserIdAsync(objectId, userId, cancellationToken);
 
         return upload is null ? null : MapToResponse(upload);
     }
@@ -156,11 +172,16 @@ public class UploadService : IUploadService
     }
 
     public async Task AbortUploadAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         CancellationToken cancellationToken = default)
     {
-        var upload = await _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, cancellationToken)
+        if (!ObjectId.TryParse(uploadId, out var objectId))
+        {
+            throw new ArgumentException($"Invalid upload ID format: {uploadId}", nameof(uploadId));
+        }
+
+        var upload = await _uploadRepository.GetByIdAndUserIdAsync(objectId, userId, cancellationToken)
             ?? throw new KeyNotFoundException($"Upload with ID {uploadId} not found");
 
         if (upload.Status == UploadStatus.Completed || upload.Status == UploadStatus.Failed)
@@ -175,7 +196,7 @@ public class UploadService : IUploadService
     private static UploadResponse MapToResponse(Upload upload)
     {
         return new UploadResponse(
-            upload.Id,
+            upload.Id.ToString(),
             upload.FileName,
             upload.ContentType,
             upload.FileSize,

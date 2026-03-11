@@ -30,11 +30,14 @@ public static class UploadClassMap
             cm.SetIgnoreExtraElements(true);
 
             cm.MapIdMember(x => x.Id)
-                .SetIdGenerator(GuidGenerator.Instance)
-                .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                .SetIdGenerator(ObjectIdGenerator.Instance)
+                .SetSerializer(new ObjectIdSerializer());
 
             cm.MapMember(x => x.Status)
                 .SetSerializer(new EnumSerializer<UploadStatus>(BsonType.String));
+
+            cm.MapMember(x=> x.ProcessingStatus)
+                .SetSerializer(new EnumSerializer<ProcessingStatus>(BsonType.String));
 
             // Intentional: MongoDB requires access to the private parameterless constructor for deserialization.
             // The domain entity uses a private constructor to enforce creation via the static factory method.

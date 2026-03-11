@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MongoDB.Bson;
 using UploadsApi.Domain.Entities;
 using UploadsApi.Domain.Enums;
 
@@ -20,7 +21,7 @@ public class UploadTests
         var upload = Upload.Create(userId, fileName, contentType, fileSize, totalParts);
 
         // Assert
-        upload.Id.Should().NotBeEmpty();
+        upload.Id.Should().NotBe(ObjectId.Empty);
         upload.UserId.Should().Be(userId);
         upload.FileName.Should().Be(fileName);
         upload.ContentType.Should().Be(contentType);
