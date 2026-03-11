@@ -92,7 +92,7 @@ secret:
     upload-orchestrator-mongo-databasename: "${MongoDB__DatabaseName}"
     upload-orchestrator-azureblob-connectionstring: "${AzureBlob__ConnectionString}"
     upload-orchestrator-azureblob-containername: "${AzureBlob__ContainerName}"
-    upload-orchestrator-rabbitmq-connectionstring: "${RabbitMQ__ConnectionString}"
+    upload-orchestrator-rabbitmq-connectionstring: "${RabbitMQ__Uri}"
     otlp-url: "${OpenTelemetry__Url}"
   #         STEPS: 3. Mapear as chaves dos segredos para variaveis de ambientes, no formato que o asp.net reconhece para sobrescrever as configs do json
   envVars:
@@ -104,7 +104,7 @@ secret:
       secretKey: upload-orchestrator-azureblob-connectionstring
     - name: AzureBlob__ContainerName
       secretKey: upload-orchestrator-azureblob-containername
-    - name: RabbitMQ__ConnectionString
+    - name: RabbitMQ__Uri
       secretKey: upload-orchestrator-rabbitmq-connectionstring
     - name: OpenTelemetry__Url
       secretKey: otlp-url
