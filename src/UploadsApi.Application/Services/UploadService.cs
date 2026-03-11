@@ -98,7 +98,7 @@ public class UploadService : IUploadService
             var videoUploadedEvent = new VideoUploadedEvent(
                 userId,
                 planId,
-                processing.Id,
+                upload.Id,
                 blobUrl,
                 DateTime.UtcNow);
 

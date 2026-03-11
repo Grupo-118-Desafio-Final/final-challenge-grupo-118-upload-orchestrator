@@ -17,7 +17,13 @@ public class Upload
     public DateTime? UpdatedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
 
-    private Upload() { }
+    public string ZipBlobUrl { get; private set; } = string.Empty;
+
+    public ProcessingStatus ProcessingStatus { get; private set; } = ProcessingStatus.NotStarted;
+
+    private Upload()
+    {
+    }
 
     public static Upload Create(
         string userId,
@@ -35,7 +41,8 @@ public class Upload
             FileSize = fileSize,
             TotalParts = totalParts,
             Status = UploadStatus.Pending,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ProcessingStatus =  ProcessingStatus.NotStarted
         };
 
         upload.ObjectKey = $"uploads/{userId}/{upload.CreatedAt:yyyyMMddHHmmss}_{upload.Id:N}_{fileName}";
