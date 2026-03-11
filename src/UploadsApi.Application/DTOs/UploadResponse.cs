@@ -11,4 +11,6 @@ public record UploadResponse(
     string Status,
     string? ErrorMessage,
     DateTime CreatedAt,
-    DateTime? CompletedAt);
+    DateTime? CompletedAt,
+    string ZipBlobUrl,
+    string ProcessingStatus);
