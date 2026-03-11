@@ -30,8 +30,8 @@ public static class UploadClassMap
             cm.SetIgnoreExtraElements(true);
 
             cm.MapIdMember(x => x.Id)
-                .SetIdGenerator(GuidGenerator.Instance)
-                .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                .SetIdGenerator(ObjectIdGenerator.Instance)
+                .SetSerializer(new ObjectIdSerializer());
 
             cm.MapMember(x => x.Status)
                 .SetSerializer(new EnumSerializer<UploadStatus>(BsonType.String));
