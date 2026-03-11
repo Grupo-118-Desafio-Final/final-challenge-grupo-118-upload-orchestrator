@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using UploadsApi.Application.Interfaces;
 using UploadsApi.Domain.Entities;
@@ -15,14 +16,14 @@ public class MongoDbUploadRepository : IUploadRepository
         _context = context;
     }
 
-    public async Task<Upload?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Upload?> GetByIdAsync(ObjectId id, CancellationToken cancellationToken = default)
     {
         var filter = Builders<Upload>.Filter.Eq(x => x.Id, id);
         return await _context.Uploads.Find(filter).FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Upload?> GetByIdAndUserIdAsync(
-        Guid id,
+        ObjectId id,
         string userId,
         CancellationToken cancellationToken = default)
     {

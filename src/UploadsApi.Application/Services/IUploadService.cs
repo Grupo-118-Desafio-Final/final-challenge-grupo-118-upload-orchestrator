@@ -10,18 +10,18 @@ public interface IUploadService
         CancellationToken cancellationToken = default);
 
     Task<PresignedUrlsResponse> GetPresignedUrlsAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         CancellationToken cancellationToken = default);
 
     Task CompleteUploadAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         string planId,
         CancellationToken cancellationToken = default);
 
     Task<UploadResponse?> GetUploadAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         CancellationToken cancellationToken = default);
 
@@ -32,7 +32,7 @@ public interface IUploadService
         CancellationToken cancellationToken = default);
 
     Task AbortUploadAsync(
-        Guid uploadId,
+        string uploadId,
         string userId,
         CancellationToken cancellationToken = default);
 }

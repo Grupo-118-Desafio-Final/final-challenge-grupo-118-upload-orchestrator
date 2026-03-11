@@ -1,10 +1,11 @@
+using MongoDB.Bson;
 using UploadsApi.Domain.Enums;
 
 namespace UploadsApi.Domain.Entities;
 
 public class Upload
 {
-    public Guid Id { get; private set; }
+    public ObjectId Id { get; private set; }
     public string UserId { get; private set; } = string.Empty;
     public string FileName { get; private set; } = string.Empty;
     public string ContentType { get; private set; } = string.Empty;
@@ -34,7 +35,7 @@ public class Upload
     {
         var upload = new Upload
         {
-            Id = Guid.NewGuid(),
+            Id = ObjectId.GenerateNewId(),
             UserId = userId,
             FileName = fileName,
             ContentType = contentType,
@@ -45,7 +46,8 @@ public class Upload
             ProcessingStatus =  ProcessingStatus.NotStarted
         };
 
-        upload.ObjectKey = $"uploads/{userId}/{upload.CreatedAt:yyyyMMddHHmmss}_{upload.Id:N}_{fileName}";
+        var idString = upload.Id.ToString();
+        upload.ObjectKey = $"uploads/{userId}/{upload.CreatedAt:yyyyMMddHHmmss}_{idString}_{fileName}";
 
         return upload;
     }

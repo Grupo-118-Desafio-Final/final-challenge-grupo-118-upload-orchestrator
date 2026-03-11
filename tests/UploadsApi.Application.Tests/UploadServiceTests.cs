@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MongoDB.Bson;
 using NSubstitute;
 using UploadsApi.Application.DTOs;
 using UploadsApi.Application.Interfaces;
@@ -46,9 +47,9 @@ public class UploadServiceTests
     public async Task GetPresignedUrlsAsync_WhenUploadExists_ShouldReturnUrls()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
+        var upload = Upload.Create("user-123", "test.mp4", "video/mp4", 1024, 2);
+        var uploadId = upload.Id.ToString();
         var userId = "user-123";
-        var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 2);
 
         var expectedUrls = new List<PresignedUrlInfo>
         {
@@ -56,7 +57,7 @@ public class UploadServiceTests
             new(2, "https://example.com/part2")
         };
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         _storageService.GeneratePresignedUrlsAsync(
@@ -77,10 +78,10 @@ public class UploadServiceTests
     public async Task GetPresignedUrlsAsync_WhenUploadNotFound_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
+        var uploadId = ObjectId.GenerateNewId().ToString();
         var userId = "user-123";
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(Arg.Any<ObjectId>(), userId, Arg.Any<CancellationToken>())
             .Returns((Upload?)null);
 
         // Act
@@ -94,13 +95,13 @@ public class UploadServiceTests
     public async Task CompleteUploadAsync_WhenValid_ShouldCompleteAndPublishEvent()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var planId = "plan-456";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 2);
+        var uploadId = upload.Id.ToString();
         upload.StartUploading();
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         _storageService.GetBlobUrl(Arg.Any<string>())
@@ -119,7 +120,7 @@ public class UploadServiceTests
             Arg.Is<VideoUploadedEvent>(e =>
                 e.UserId == userId &&
                 e.PlanId == planId &&
-                e.ProcessingId != Guid.Empty &&
+                !string.IsNullOrEmpty(e.ProcessingId) &&
                 e.BlobUrl == "https://storage.example.com/blob"),
             "video.uploaded",
             Arg.Any<CancellationToken>());
@@ -129,11 +130,11 @@ public class UploadServiceTests
     public async Task CompleteUploadAsync_WhenNotUploading_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 2);
+        var uploadId = upload.Id.ToString();
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         // Act
@@ -148,11 +149,11 @@ public class UploadServiceTests
     public async Task GetUploadAsync_WhenExists_ShouldReturnUploadResponse()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 1);
+        var uploadId = upload.Id.ToString();
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         // Act
@@ -168,10 +169,10 @@ public class UploadServiceTests
     public async Task GetUploadAsync_WhenNotExists_ShouldReturnNull()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
+        var uploadId = ObjectId.GenerateNewId().ToString();
         var userId = "user-123";
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(Arg.Any<ObjectId>(), userId, Arg.Any<CancellationToken>())
             .Returns((Upload?)null);
 
         // Act
@@ -210,11 +211,11 @@ public class UploadServiceTests
     public async Task AbortUploadAsync_WhenPending_ShouldAbortAndDelete()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 1);
+        var uploadId = upload.Id.ToString();
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         // Act
@@ -232,13 +233,13 @@ public class UploadServiceTests
     public async Task AbortUploadAsync_WhenCompleted_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
         var userId = "user-123";
         var upload = Upload.Create(userId, "test.mp4", "video/mp4", 1024, 1);
+        var uploadId = upload.Id.ToString();
         upload.StartUploading();
         upload.Complete();
 
-        _uploadRepository.GetByIdAndUserIdAsync(uploadId, userId, Arg.Any<CancellationToken>())
+        _uploadRepository.GetByIdAndUserIdAsync(upload.Id, userId, Arg.Any<CancellationToken>())
             .Returns(upload);
 
         // Act

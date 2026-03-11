@@ -53,11 +53,11 @@ public class UploadsController : ControllerBase
             response);
     }
 
-    [HttpGet("{id:guid}/presigned-urls")]
+    [HttpGet("{id}/presigned-urls")]
     [ProducesResponseType(typeof(PresignedUrlsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPresignedUrls(
-        Guid id,
+        string id,
         [FromHeader(Name = "X-User-Id")] string userId,
         CancellationToken cancellationToken)
     {
@@ -69,11 +69,11 @@ public class UploadsController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPost("{id:guid}/complete")]
+    [HttpPost("{id}/complete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CompleteUpload(
-        Guid id,
+        string id,
         [FromHeader(Name = "X-User-Id")] string userId,
         [FromHeader(Name = "X-Plan-Id")] string planId,
         CancellationToken cancellationToken)
@@ -109,11 +109,11 @@ public class UploadsController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     [ProducesResponseType(typeof(UploadResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUpload(
-        Guid id,
+        string id,
         [FromHeader(Name = "X-User-Id")] string userId,
         CancellationToken cancellationToken)
     {
@@ -130,11 +130,11 @@ public class UploadsController : ControllerBase
         return Ok(response);
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AbortUpload(
-        Guid id,
+        string id,
         [FromHeader(Name = "X-User-Id")] string userId,
         CancellationToken cancellationToken)
     {

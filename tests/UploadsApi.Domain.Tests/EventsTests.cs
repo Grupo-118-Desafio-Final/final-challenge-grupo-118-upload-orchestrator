@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MongoDB.Bson;
 using UploadsApi.Domain.Events;
 
 namespace UploadsApi.Domain.Tests;
@@ -9,7 +10,7 @@ public class EventsTests
     public void UploadFailedEvent_ShouldStoreAllProperties()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
+        var uploadId = ObjectId.GenerateNewId().ToString();
         var userId = "user-123";
         var fileName = "video.mp4";
         var errorMessage = "Processing failed";
@@ -30,7 +31,7 @@ public class EventsTests
     public void UploadFailedEvent_ShouldSupportValueEquality()
     {
         // Arrange
-        var uploadId = Guid.NewGuid();
+        var uploadId = ObjectId.GenerateNewId().ToString();
         var failedAt = DateTime.UtcNow;
 
         var evt1 = new UploadFailedEvent(uploadId, "user-1", "video.mp4", "error", failedAt);
@@ -46,7 +47,7 @@ public class EventsTests
         // Arrange
         var userId = "user-123";
         var planId = "plan-basic";
-        var processingId = Guid.NewGuid();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var blobUrl = "https://storage.example.com/bucket/video.mp4";
         var eventAt = DateTime.UtcNow;
 
@@ -65,7 +66,7 @@ public class EventsTests
     public void VideoUploadedEvent_ShouldSupportValueEquality()
     {
         // Arrange
-        var processingId = Guid.NewGuid();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var eventAt = DateTime.UtcNow;
 
         var evt1 = new VideoUploadedEvent("user-1", "plan-1", processingId, "https://url", eventAt);
@@ -80,8 +81,8 @@ public class EventsTests
     {
         // Arrange
         var eventAt = DateTime.UtcNow;
-        var evt1 = new VideoUploadedEvent("user-1", "plan-1", Guid.NewGuid(), "https://url1", eventAt);
-        var evt2 = new VideoUploadedEvent("user-2", "plan-2", Guid.NewGuid(), "https://url2", eventAt);
+        var evt1 = new VideoUploadedEvent("user-1", "plan-1", ObjectId.GenerateNewId().ToString(), "https://url1", eventAt);
+        var evt2 = new VideoUploadedEvent("user-2", "plan-2", ObjectId.GenerateNewId().ToString(), "https://url2", eventAt);
 
         // Assert
         evt1.Should().NotBe(evt2);

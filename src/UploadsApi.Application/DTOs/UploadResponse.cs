@@ -4,7 +4,7 @@ namespace UploadsApi.Application.DTOs;
 
 [ExcludeFromCodeCoverage]
 public record UploadResponse(
-    Guid Id,
+    string Id,
     string FileName,
     string ContentType,
     long FileSize,
