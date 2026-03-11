@@ -203,6 +203,8 @@ public class UploadService : IUploadService
             upload.Status.ToString(),
             upload.ErrorMessage,
             upload.CreatedAt,
-            upload.CompletedAt);
+            upload.CompletedAt,
+            upload.ZipBlobUrl,
+            upload.ProcessingStatus.ToString());
     }
 }

@@ -7,6 +7,9 @@ using UploadsApi.Domain.Exceptions;
 
 namespace UploadsApi.Api.Controllers;
 
+/// <summary>
+/// 
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [ExcludeFromCodeCoverage]
@@ -15,6 +18,11 @@ public class UploadsController : ControllerBase
     private readonly IUploadService _uploadService;
     private readonly IValidator<CreateUploadRequest> _createUploadValidator;
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="uploadService"></param>
+    /// <param name="createUploadValidator"></param>
     public UploadsController(
         IUploadService uploadService,
         IValidator<CreateUploadRequest> createUploadValidator)
@@ -23,6 +31,14 @@ public class UploadsController : ControllerBase
         _createUploadValidator = createUploadValidator;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="userId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="MissingUserIdException"></exception>
     [HttpPost]
     [ProducesResponseType(typeof(CreateUploadResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -53,6 +69,14 @@ public class UploadsController : ControllerBase
             response);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="userId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="MissingUserIdException"></exception>
     [HttpGet("{id}/presigned-urls")]
     [ProducesResponseType(typeof(PresignedUrlsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,6 +93,16 @@ public class UploadsController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="userId"></param>
+    /// <param name="planId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="MissingUserIdException"></exception>
+    /// <exception cref="MissingPlanIdException"></exception>
     [HttpPost("{id}/complete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -89,6 +123,15 @@ public class UploadsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="page"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="MissingUserIdException"></exception>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<UploadResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUploads(
@@ -109,6 +152,14 @@ public class UploadsController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="userId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="MissingUserIdException"></exception>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(UploadResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -130,6 +181,14 @@ public class UploadsController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="userId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="MissingUserIdException"></exception>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

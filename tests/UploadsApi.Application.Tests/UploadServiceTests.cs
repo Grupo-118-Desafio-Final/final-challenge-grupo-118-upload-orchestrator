@@ -555,5 +555,7 @@ public class UploadServiceTests
         result.Status.Should().Be("Completed");
         result.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         result.CompletedAt.Should().NotBeNull();
+        result.ZipBlobUrl.Should().Be(string.Empty);
+        result.ProcessingStatus.Should().Be("NotStarted");
     }
 }

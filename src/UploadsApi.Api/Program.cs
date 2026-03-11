@@ -1,5 +1,8 @@
 using Microsoft.OpenApi.Models;
 using MongoDB.Bson;
+using MongoDB.Driver;
+using StandardDependencies.Injection;
+using StandardDependencies.Models;
 using UploadsApi.Api.Middleware;
 using UploadsApi.Application;
 using UploadsApi.Infrastructure;
@@ -7,21 +10,24 @@ using UploadsApi.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#pragma warning disable CS0618
-BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
-#pragma warning restore CS0618
+var swaggerOptions = builder
+    .Configuration
+    .GetSection(SwaggerOptions.SectionName)
+    .Get<SwaggerOptions>();
+
+var openTelemetryOptions = builder
+    .Configuration
+    .GetSection(OpenTelemetryOptions.SectionName)
+    .Get<OpenTelemetryOptions>();
+
+// Configura elementos comuns: Environment Variables, OpenTelemetry e Swagger
+builder.ConfigureCommonElements(openTelemetryOptions, swaggerOptions);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Uploads API",
-        Version = "v1",
-        Description = "API for video upload orchestration"
-    });
-
     c.AddSecurityDefinition("UserId", new OpenApiSecurityScheme
     {
         Description = "User ID passed from API Gateway",
@@ -52,19 +58,17 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHealthChecks()
     .AddMongoDb(
-        builder.Configuration["MongoDB:ConnectionString"]!,
-        name: "mongodb")
+        _ => new MongoClient(builder.Configuration["MongoDb:ConnectionString"]),
+        name: "mongodb",
+        timeout: TimeSpan.FromSeconds(5),
+        tags: new[] { "db", "mongo" })
     .AddRabbitMQ(
         rabbitConnectionString: builder.Configuration["RabbitMQ:Uri"]!,
         name: "rabbitmq");
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseStandarizedSwagger(swaggerOptions);
 
 var mongoDbContext = app.Services.GetRequiredService<MongoDbContext>();
 await mongoDbContext.EnsureIndexesCreatedAsync();
@@ -78,4 +82,9 @@ app.MapHealthChecks("/health");
 
 await app.RunAsync();
 
-public static partial class Program { }
+/// <summary>
+/// 
+/// </summary>
+public static partial class Program
+{
+}
