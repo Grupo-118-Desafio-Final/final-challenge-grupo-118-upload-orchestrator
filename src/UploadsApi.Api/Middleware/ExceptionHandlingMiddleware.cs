@@ -4,6 +4,9 @@ using System.Text.Json;
 
 namespace UploadsApi.Api.Middleware;
 
+/// <summary>
+/// 
+/// </summary>
 [ExcludeFromCodeCoverage]
 public class ExceptionHandlingMiddleware
 {
@@ -15,12 +18,21 @@ public class ExceptionHandlingMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="next"></param>
+    /// <param name="logger"></param>
     public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="context"></param>
     public async Task InvokeAsync(HttpContext context)
     {
         try
