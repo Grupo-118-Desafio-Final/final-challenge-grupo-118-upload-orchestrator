@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.MongoDb" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.1" />
     <PackageReference Include="FinalChallenge.Grupo118.StandardDependencies.Injection" Version="2026.3.9.5823" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.2" />
