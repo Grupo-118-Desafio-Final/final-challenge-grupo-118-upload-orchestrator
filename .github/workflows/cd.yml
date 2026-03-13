@@ -38,6 +38,7 @@ jobs:
             "AzureBlob__ConnectionString":"APPLICATION_BLOBSTORAGE_CONNECTIONSTRING",
             "AzureBlob__ContainerName":"APPLICATION_BLOBSTORAGE_CONTAINERNAME",
             "RabbitMQ__Uri":"APPLICATION_MESSAGING_CONNECTIONSTRING",
+            "Jwt__Key": "APPLICATION_SECURITY_JWTKEY",
             "OpenTelemetry__Url": "GRAFANA_OTLP_URL"        
         }
       variables_mapping: |
